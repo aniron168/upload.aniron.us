@@ -1,4 +1,4 @@
 <?php
-define('SITE_URL', 'http://localhost/');
+define('SITE_URL', 'http://upload.localhost/');
 ?>
  

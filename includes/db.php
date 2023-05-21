@@ -1,8 +1,8 @@
 <?php
 $servername = "localhost";
-$username = "your_username";
-$password = "your_password";
-$dbname = "your_database_name";
+$username = "upload";
+$password = "]s_FPm3RIm5eq[Qd";
+$dbname = "upload";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
