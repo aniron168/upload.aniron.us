@@ -8,23 +8,16 @@ if (!check_logged_in() || !check_user_is_admin()) {
     exit;
 }
 
-// Rest of your admin dashboard code. This might include a list of files, users, etc.
-// Assuming you have a 'files' table and 'users' table in your database with appropriate columns
-$stmt = $conn->prepare("SELECT * FROM files");
-$stmt->execute();
-$files = $stmt->get_result();
-
-$stmt2 = $conn->prepare("SELECT * FROM users");
-$stmt2->execute();
-$users = $stmt2->get_result();
-
-
 $action = isset($_GET['action']) ? $_GET['action'] : '';
+
+// Fetch all files and users
+$files = get_all_files();
+$users = get_all_users();
 
 //...
 
 switch ($action) {
-    case 'create_user':
+    /* case 'create_user':
         // handle form submission for creating user
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
@@ -44,6 +37,14 @@ switch ($action) {
                 <input type="submit" value="Create User">
             </form>
             <?php
+        }
+        break; */
+
+    case 'create_user':
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $email = validate_form($_POST['email']);
+            $password = validate_form($_POST['password']);
+            create_user($email, $password);
         }
         break;
     case 'change_password':
@@ -172,6 +173,7 @@ switch ($action) {
         // show dashboard
 }
 
+
 ?>
 
 <!DOCTYPE html>
@@ -186,7 +188,7 @@ switch ($action) {
     <?php if ($files->num_rows > 0): ?>
         <ul>
             <!-- In file listing -->
-            <?php while ($file = $files->fetch_assoc()): ?>
+            <?php foreach ($files as $file): ?>
                 <li>
                     <a href="/files/<?php echo htmlspecialchars($file['filename']); ?>"><?php echo htmlspecialchars($file['filename']); ?></a>
                     - Uploaded by <?php echo htmlspecialchars($file['uploaded_by']); ?>
@@ -197,10 +199,16 @@ switch ($action) {
                         <input type="hidden" name="file_id" value="<?php echo $file['id']; ?>">
                     </form>
                 </li>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
+        </ul>
+    <?php else: ?>
+        <p>No files uploaded yet.</p>
+    <?php endif; ?>
 
-            <!-- In user listing -->
-            <?php while ($user = $users->fetch_assoc()): ?>
+    <h2>All Users</h2>
+    <?php if (count($users) > 0): ?>
+        <ul>
+            <?php foreach ($users as $user): ?>
                 <li>
                     <?php echo htmlspecialchars($user['email']); ?>
                     <a href="index.php?action=change_password&user_id=<?php echo $user['id']; ?>">Change User Password</a>
@@ -218,15 +226,33 @@ switch ($action) {
                         <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
                     </form>
                 </li>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         </ul>
-    <?php else: ?>
-        <p>No users have been registered.</p>
+        <?php else: ?>
+        <p>No users have been registered yet.</p>
     <?php endif; ?>
 
     <a href="index.php?action=create_user">Create User</a>
-    <a href="index.php?action=change_password">Change User Password</a>
-    <!-- ...and so on -->
+    <a href="index.php?action=upload_file">Upload File</a>
+
+    <!-- User creation form -->
+    <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"] . '?action=create_user');?>" method="post">
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" required><br>
+
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" required><br>
+
+        <input type="submit" value="Create User">
+    </form>
+
+    <?php
+    // Display message
+    if (isset($_SESSION['message'])) {
+        echo '<p>' . $_SESSION['message'] . '</p>';
+        unset($_SESSION['message']);
+    }  
+    ?>  
 
     <!-- Logout button -->
     <form action="/logout.php" method="POST">
